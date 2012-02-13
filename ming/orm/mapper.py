@@ -49,7 +49,7 @@ class Mapper(object):
 
     @with_hooks('insert')
     def insert(self, obj, state, **kwargs):
-        state.document.m.insert(validate=False)
+        state.document.m.insert(validate=False, **kwargs)
         self.session.save(obj)
         state.status = state.clean
 

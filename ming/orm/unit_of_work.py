@@ -30,7 +30,7 @@ class UnitOfWork(object):
         return (obj for obj in self._objects.itervalues()
                 if state(obj).status == ObjectState.deleted)
 
-    def flush(self):
+    def flush(self, **kwargs):
         new_objs = {}
         inow = self.session.insert_now
         unow = self.session.update_now
@@ -38,15 +38,15 @@ class UnitOfWork(object):
         for i, obj in self._objects.items():
             st = state(obj)
             if st.status == ObjectState.new:
-                inow(obj, st)
+                inow(obj, st, **kwargs)
                 st.status = ObjectState.clean
                 new_objs[i] = obj
             elif st.status == ObjectState.dirty:
-                unow(obj, st)
+                unow(obj, st, **kwargs)
                 st.status = ObjectState.clean
                 new_objs[i] = obj
             elif st.status == ObjectState.deleted:
-                dnow(obj, st)
+                dnow(obj, st, **kwargs)
             elif st.status == ObjectState.clean:
                 new_objs[i] = obj
             else:
