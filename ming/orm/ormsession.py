@@ -37,27 +37,27 @@ class ORMSession(object):
         return mapper(
             cls, collection=collection, session=self, **kwargs)
     
-    def save(self, obj):
-        self.uow.save(obj)
-        self.imap.save(obj)
+    def save(self, obj, **kwargs):
+        self.uow.save(obj, **kwargs)
+        self.imap.save(obj, **kwargs)
 
     def expunge(self, obj):
         self.uow.expunge(obj)
         self.imap.expunge(obj)
 
     @with_hooks('flush')
-    def flush(self, obj=None):
+    def flush(self, obj=None, **kwargs):
         if self.impl.db is None: return
         if obj is None:
-            self.uow.flush()
+            self.uow.flush(**kwargs)
         else:
             st = state(obj)
             if st.status == st.new:
-                self.insert_now(obj, st)
+                self.insert_now(obj, st, **kwargs)
             elif st.status == st.dirty:
-                self.update_now(obj, st)
+                self.update_now(obj, st, **kwargs)
             elif st.status == st.deleted:
-                self.update_now(obj, st)
+                self.update_now(obj, st, **kwargs)
 
     @with_hooks('insert')
     def insert_now(self, obj, st, **kwargs):
