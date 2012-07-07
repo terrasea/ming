@@ -2,7 +2,9 @@ from setuptools import setup, find_packages
 
 __version__ = 'undefined'
 
-exec(open('ming/version.py'))
+with open('ming/version.py') as r:
+	data = r.read()
+	exec(data)
 
 setup(name='Ming',
       version=__version__,
