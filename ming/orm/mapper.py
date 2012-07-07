@@ -9,7 +9,7 @@ def mapper(cls, collection=None, session=None, **kwargs):
     if collection is None and session is None:
         if isinstance(cls, type):
             return Mapper.by_class(cls)
-        elif isinstance(cls, basestring):
+        elif isinstance(cls, str):
             return Mapper.by_classname(cls)
         else:
             return Mapper._mapper_by_class[cls.__class__]
@@ -40,7 +40,7 @@ class Mapper(object):
         self.extensions = [e(self) for e in extensions]
         self.options = Object(kwargs.pop('options', dict(refresh=False, instrument=True)))
         if kwargs:
-            raise TypeError, 'Unknown kwd args: %r' % kwargs
+            raise TypeError('Unknown kwd args: %r' % kwargs)
         self._instrument_class(properties, include_properties, exclude_properties)
 
     def __repr__(self):
@@ -105,7 +105,7 @@ class Mapper(object):
         try:
             return cls._mapper_by_classname[name]
         except KeyError:
-            for n, mapped_class in cls._mapper_by_classname.iteritems():
+            for n, mapped_class in cls._mapper_by_classname.items():
                 if n.endswith('.' + name): return mapped_class
             raise
 
@@ -152,7 +152,7 @@ class Mapper(object):
             properties = dict((k,properties[k]) for k in include_properties)
         for k in exclude_properties:
             properties.pop(k, None)
-        for k,v in properties.iteritems():
+        for k,v in properties.items():
             v.name = k
             v.mapper = self
             setattr(self.mapped_class, k, v)
@@ -163,7 +163,7 @@ class Mapper(object):
         for k in ('__repr__', '__getitem__', '__setitem__', '__contains__',
                   'delete'):
             if getattr(self.mapped_class, k, ()) == getattr(object, k, ()):
-                setattr(self.mapped_class, k, getattr(inst, k).im_func)
+                setattr(self.mapped_class, k, getattr(inst, k).__func__)
 
     def _instrumentation(self):
         class _Instrumentation(object):
@@ -183,7 +183,7 @@ class Mapper(object):
                 try:
                     return getattr(self_, name)
                 except AttributeError:
-                    raise KeyError, name
+                    raise KeyError(name)
             def __setitem__(self_, name, value):
                 setattr(self_, name, value)
             def __contains__(self_, name):
@@ -259,7 +259,7 @@ class _ClassQuery(object):
             setattr(self, method_name, _proxy(method_name))
 
     def get(self, **kwargs):
-        if kwargs.keys() == [ '_id' ]:
+        if list(kwargs.keys()) == [ '_id' ]:
             return self.session.get(self.mapped_class, kwargs['_id'])
         return self.find(kwargs).first()
 
@@ -346,5 +346,5 @@ class _InitDecorator(object):
             mapped_class.__init__ = cls(mapper, old_init)
 
 def _basic_init(self_, **kwargs):
-    for k,v in kwargs.iteritems():
+    for k,v in kwargs.items():
         setattr(self_, k, v)

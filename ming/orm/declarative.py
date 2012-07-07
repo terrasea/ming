@@ -36,7 +36,7 @@ class _MappedClassMeta(type):
         include_properties = getattr(mm, 'include_properties', [])
         exclude_properties = getattr(mm, 'exclude_properties', [])
         extensions = getattr(mm, 'extensions', [])
-        for k,v in dct.iteritems():
+        for k,v in dct.items():
             if isinstance(v, ORMProperty):
                 v.name = k
                 properties[k] = v
@@ -55,7 +55,7 @@ class _MappedClassMeta(type):
         fields = []
         indexes = []
         # Set the names of the fields
-        for k,v in dct.iteritems():
+        for k,v in dct.items():
             try:
                 field = getattr(v, 'field', None)
             except:
@@ -76,7 +76,7 @@ class _MappedClassMeta(type):
             polymorphic_on=mm_dict.get('polymorphic_on', None),
             polymorphic_identity=getattr(mm, 'polymorphic_identity', None))
         if hasattr(mm, 'before_save'):
-            collection_kwargs['before_save'] = mm.before_save.im_func
+            collection_kwargs['before_save'] = mm.before_save.__func__
         if not doc_bases:
             collection_cls = collection(
                 mm.name, mm.session and mm.session.impl,
@@ -91,8 +91,7 @@ class _MappedClassMeta(type):
                 doc_bases, *(fields + indexes), **collection_kwargs)
         return collection_cls
 
-class MappedClass(object):
-    __metaclass__ = _MappedClassMeta
+class MappedClass(object, metaclass=_MappedClassMeta):
     _registry = {}
     class __mongometa__:
         name=None

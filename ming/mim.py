@@ -34,7 +34,7 @@ class Connection(object):
 
     def clear_all(self):
         '''Remove all data, but keep the indexes'''
-        for db in self._databases.values():
+        for db in list(self._databases.values()):
             db.clear()
 
     def end_request(self):
@@ -57,7 +57,7 @@ class Connection(object):
             return db
 
     def database_names(self):
-        return self._databases.keys()
+        return list(self._databases.keys())
 
     def drop_database(self, name):
         del self._databases[name]
@@ -89,7 +89,7 @@ class Database(database.Database):
 
     def command(self, command,
                 value=1, check=True, allowable_errors=None, **kwargs):
-        if isinstance(command, basestring):
+        if isinstance(command, str):
             command = {command:value}
             command.update(**kwargs)
         if 'filemd5' in command:
@@ -104,7 +104,7 @@ class Database(database.Database):
                     before = dict(command['query'])
                     coll.insert(before)
                 else:
-                    raise OperationFailure, 'No matching object found'
+                    raise OperationFailure('No matching object found')
             coll.update(command['query'], command['update'])
             if command.get('new', False) or upsert:
                 return dict(value=coll.find_one(dict(_id=before['_id'])))
@@ -113,12 +113,12 @@ class Database(database.Database):
             collection = command.pop('mapreduce')
             return self._handle_mapreduce(collection, **command)
         else:
-            raise NotImplementedError, repr(command)
+            raise NotImplementedError(repr(command))
 
     def _handle_mapreduce(self, collection,
                           query=None, map=None, reduce=None, out=None):
         if self._jsruntime is None:
-            raise ImportError, 'Cannot import spidermonkey, required for MIM mapreduce'
+            raise ImportError('Cannot import spidermonkey, required for MIM mapreduce')
         j = self._jsruntime.new_context()
         temp_coll = collections.defaultdict(list)
         def emit(k, v):
@@ -126,7 +126,7 @@ class Database(database.Database):
                 k = bson.BSON.encode(k)
             temp_coll[k].append(v)
         def emit_reduced(k, v):
-            print k,v 
+            print(k,v) 
         j.add_global('emit', emit)
         j.add_global('emit_reduced', emit_reduced)
         j.execute('var map=%s;' % map)
@@ -134,12 +134,12 @@ class Database(database.Database):
         if query is None: query = {}
         # Run the map phase
         def tojs(obj):
-            if isinstance(obj, basestring):
+            if isinstance(obj, str):
                 return obj
             elif isinstance(obj, datetime):
                 return j.execute('new Date("%s")' % obj.ctime())
             elif isinstance(obj, collections.Mapping):
-                return dict((k,tojs(v)) for k,v in obj.iteritems())
+                return dict((k,tojs(v)) for k,v in obj.items())
             elif isinstance(obj, collections.Sequence):
                 result = j.execute('new Array()')
                 for v in obj:
@@ -152,37 +152,37 @@ class Database(database.Database):
         # Run the reduce phase
         reduced = dict(
             (k, j.execute('reduce')(k, tojs(values)))
-            for k, values in temp_coll.iteritems())
+            for k, values in temp_coll.items())
         # Handle the output phase
         result = dict()
         assert len(out) == 1
-        if out.keys() == ['reduce']:
-            result['result'] = out.values()[0]
-            out_coll = self[out.values()[0]]
-            for k, v in reduced.iteritems():
+        if list(out.keys()) == ['reduce']:
+            result['result'] = list(out.values())[0]
+            out_coll = self[list(out.values())[0]]
+            for k, v in reduced.items():
                 doc = out_coll.find_one(dict(_id=k))
                 if doc is None:
                     out_coll.insert(dict(_id=k, value=v))
                 else:
                     doc['value'] = j.execute('reduce')(k, tojs([v, doc['value']]))
                     out_coll.save(doc)
-        elif out.keys() == ['merge']:
-            result['result'] = out.values()[0]
-            out_coll = self[out.values()[0]]
-            for k, v in reduced.iteritems():
+        elif list(out.keys()) == ['merge']:
+            result['result'] = list(out.values())[0]
+            out_coll = self[list(out.values())[0]]
+            for k, v in reduced.items():
                 out_coll.save(dict(_id=k, value=v))
-        elif out.keys() == ['replace']:
-            result['result'] = out.values()[0]
-            self._collections.pop(out.values()[0], None)
-            out_coll = self[out.values()[0]]
-            for k, v in reduced.iteritems():
+        elif list(out.keys()) == ['replace']:
+            result['result'] = list(out.values())[0]
+            self._collections.pop(list(out.values())[0], None)
+            out_coll = self[list(out.values())[0]]
+            for k, v in reduced.items():
                 out_coll.save(dict(_id=k, value=v))
-        elif out.keys() == ['inline']:
+        elif list(out.keys()) == ['inline']:
             result['results'] = [
                 dict(_id=k, value=v)
-                for k,v in reduced.iteritems() ]
+                for k,v in reduced.items() ]
         else:
-            raise TypeError, 'Unsupported out type: %s' % out.keys()
+            raise TypeError('Unsupported out type: %s' % list(out.keys()))
         return result
                 
 
@@ -203,13 +203,13 @@ class Database(database.Database):
         return 'mim.Database(%s)' % self.name
 
     def collection_names(self):
-        return self._collections.keys()
+        return list(self._collections.keys())
 
     def drop_collection(self, name):
         del self._collections[name]
 
     def clear(self):
-        for coll in self._collections.values():
+        for coll in list(self._collections.values()):
             coll.clear()
 
 class Collection(collection.Collection):
@@ -223,7 +223,7 @@ class Collection(collection.Collection):
 
     def clear(self):
         self._data = {}
-        for ui in self._unique_indexes.values():
+        for ui in list(self._unique_indexes.values()):
             ui.clear()
 
     @property
@@ -240,7 +240,7 @@ class Collection(collection.Collection):
     def _find(self, spec, sort=None):
         bson_safe(spec)
         def _gen():
-            for doc in self._data.itervalues():
+            for doc in self._data.values():
                 if match(spec, doc): yield doc
         return _gen()
 
@@ -270,7 +270,7 @@ class Collection(collection.Collection):
                 before = dict(query)
                 self.insert(before)
             else:
-                raise OperationFailure, 'No matching object found'
+                raise OperationFailure('No matching object found')
         self.update(query, update)
         if kwargs.get('new', False) or upserted:
             return self.find_one(dict(_id=before['_id']))
@@ -323,7 +323,7 @@ class Collection(collection.Collection):
     def remove(self, spec=None, **kwargs):
         if spec is None: spec = {}
         new_data = {}
-        for id, doc in self._data.iteritems():
+        for id, doc in self._data.items():
             if match(spec, doc):
                 self._deindex(doc)
             else:
@@ -340,7 +340,7 @@ class Collection(collection.Collection):
         self._indexes[index_name] =[ (k, 0) for k in keys ]
         if not unique: return
         self._unique_indexes[keys] = index = {}
-        for id, doc in self._data.iteritems():
+        for id, doc in self._data.items():
             key_values = tuple(doc.get(key, None) for key in keys)
             index[key_values] =id
         return index_name
@@ -348,7 +348,7 @@ class Collection(collection.Collection):
     def index_information(self):
         return dict(
             (index_name, dict(key=fields))
-            for index_name, fields in self._indexes.iteritems())
+            for index_name, fields in self._indexes.items())
 
     def drop_index(self, iname):
         index = self._indexes.pop(iname, None)
@@ -361,16 +361,16 @@ class Collection(collection.Collection):
 
     def _index(self, doc):
         if '_id' not in doc: return
-        for keys, index in self._unique_indexes.iteritems():
+        for keys, index in self._unique_indexes.items():
             key_values = tuple(doc.get(key, None) for key in keys)
             old_id = index.get(key_values, ())
             if old_id == doc['_id']: continue
             if old_id in self._data:
-                raise DuplicateKeyError, '%r: %s' % (self, keys)
+                raise DuplicateKeyError('%r: %s' % (self, keys))
             index[key_values] = doc['_id']
 
     def _deindex(self, doc):
-        for keys, index in self._unique_indexes.iteritems():
+        for keys, index in self._unique_indexes.items():
             key_values = tuple(doc.get(key, None) for key in keys)
             index.pop(key_values, None)
 
@@ -392,7 +392,7 @@ class Cursor(object):
         if self._sort is not None:
             result = sorted(result, cmp=cursor_comparator(self._sort))
         if self._skip is not None:
-            result = itertools.islice(result, self._skip, sys.maxint)
+            result = itertools.islice(result, self._skip, sys.maxsize)
         if self._limit is not None:
             result = itertools.islice(result, abs(self._limit))
         return iter(result)
@@ -403,8 +403,8 @@ class Cursor(object):
     def __iter__(self):
         return self
 
-    def next(self):
-        value = self.iterator.next()
+    def __next__(self):
+        value = next(self.iterator)
         value = bcopy(value)
         if self._fields:
             value = dict((k, value[k]) for k in self._fields)
@@ -453,7 +453,7 @@ def match(spec, doc):
     match({'tags.tag':'test'}, {'tags':[{'tag':'test'}]})
     '''
     try:
-        for k,v in spec.iteritems():
+        for k,v in spec.items():
             if k == '$or':
                 if not isinstance(spec[k], list):
                     raise InvalidOperation('$or clauses must be provided in a list')
@@ -465,13 +465,13 @@ def match(spec, doc):
                 op, value = _parse_query(v)
                 if not _part_match(op, value, k.split('.'), doc):
                     return False
-    except (AttributeError, KeyError), ex:
+    except (AttributeError, KeyError) as ex:
         return False
     return True
 
 def _parse_query(v):
-    if isinstance(v, dict) and len(v) == 1 and v.keys()[0].startswith('$'):
-        return v.keys()[0], v.values()[0]
+    if isinstance(v, dict) and len(v) == 1 and list(v.keys())[0].startswith('$'):
+        return list(v.keys())[0], list(v.values())[0]
     else:
         return '$eq', v
 
@@ -523,39 +523,39 @@ def compare(op, a, b):
         return a != () if b else a == ()
     if op == '$all':
         return set(a).issuperset(b)
-    raise NotImplementedError, op
+    raise NotImplementedError(op)
         
 def update(doc, updates):
     newdoc = {}
-    for k, v in updates.iteritems():
+    for k, v in updates.items():
         if k.startswith('$'): continue
         newdoc[k] = bcopy(v)
     if newdoc:
         doc.clear()
         doc.update(newdoc)
-    for k, v in updates.iteritems():
+    for k, v in updates.items():
         if k == '$inc':
-            for kk, vv in v.iteritems():
+            for kk, vv in v.items():
                 doc[kk] = doc.get(kk, 0) + vv
         elif k == '$push':
-            for kk, vv in v.iteritems():
+            for kk, vv in v.items():
                 doc[kk].append(vv)
         elif k == '$addToSet':
-            for kk, vv in v.iteritems():
+            for kk, vv in v.items():
                 if vv not in doc[kk]:
                     doc[kk].append(vv)
         elif k == '$pull':
-            for kk, vv in v.iteritems():
+            for kk, vv in v.items():
                 doc[kk] = [
                     vvv for vvv in doc[kk] if vvv != vv ]
         elif k == '$set':
             doc.update(v)
         elif k.startswith('$'):
-            raise NotImplementedError, k
+            raise NotImplementedError(k)
     validate(doc)
                 
 def validate(doc):
-    for k,v in doc.iteritems():
+    for k,v in doc.items():
         assert '$' not in k
         assert '.' not in k
         if hasattr(v, 'iteritems'):
@@ -574,7 +574,7 @@ def wrap_as_class(value, as_class):
     if isinstance(value, dict):
         return as_class(dict(
                 (k, wrap_as_class(v, as_class))
-                for k,v in value.items()))
+                for k,v in list(value.items())))
     elif isinstance(value, list):
         return [ wrap_as_class(v, as_class) for v in value ]
     else:

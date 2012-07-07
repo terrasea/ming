@@ -23,7 +23,7 @@ class Field(object):
             self.name = args[0]
             self.type = args[1]
         else:
-            raise TypeError, 'Field() takes 1 or 2 argments, not %s' % len(args)
+            raise TypeError('Field() takes 1 or 2 argments, not %s' % len(args))
         self.index = kwargs.pop('index', False)
         self.unique = kwargs.pop('unique', False)
         self.sparse = kwargs.pop('sparse', False)
@@ -51,7 +51,7 @@ class Index(object):
         self.sparse = kwargs.pop('sparse', False)
         self.index_spec = fixup_index(fields, self.direction)
         self.name = 'idx_' + '_'.join('%s_%d' % t for t in self.index_spec)
-        if kwargs: raise TypeError, 'unknown kwargs: %r' % kwargs
+        if kwargs: raise TypeError('unknown kwargs: %r' % kwargs)
 
     def __repr__(self):
         specs = [ '%s:%s' % t  for t in self.index_spec ]
@@ -73,10 +73,10 @@ def collection(*args, **kwargs):
 
 def _process_collection_args(args, kwargs):
     if len(args) < 1:
-        raise TypeError, 'collection() takes at least one argument'
-    if isinstance(args[0], (basestring, type(None))):
+        raise TypeError('collection() takes at least one argument')
+    if isinstance(args[0], (str, type(None))):
         if len(args) < 2:
-            raise TypeError, 'collection(name, session) takes at least two arguments'
+            raise TypeError('collection(name, session) takes at least two arguments')
         collection_name = args[0]
         session = args[1]
         bases = (_Document,)
@@ -92,7 +92,7 @@ def _process_collection_args(args, kwargs):
         collection_name = bases[-1].m.collection_name
         session = bases[-1].m.session
     else:
-        raise TypeError, (
+        raise TypeError(
             'collection(name, session, ...) and collection(base_class) are the'
             ' only valid signatures')
     collection_name =  kwargs.pop(
@@ -120,9 +120,9 @@ def _process_collection_args(args, kwargs):
         elif isinstance(a, Index):
             indexes.append(a)
         else:
-            raise TypeError, "don't know what to do with %r" % (a,)
+            raise TypeError("don't know what to do with %r" % (a,))
 
-    return field_index.values(), indexes, collection_name, bases, session
+    return list(field_index.values()), indexes, collection_name, bases, session
 
 class _CurriedProxyClass(type):
 
@@ -145,8 +145,7 @@ class _CurriedProxyClass(type):
         cls = type.__new__(meta, name, bases, dct)
         return cls
 
-class _InstanceManager(object):
-    __metaclass__ = _CurriedProxyClass
+class _InstanceManager(object, metaclass=_CurriedProxyClass):
     _proxy_methods = (
         'save', 'insert', 'upsert', 'delete', 'set', 'increase_field')
     _proxy_on='session'
@@ -171,8 +170,7 @@ class _InstanceManager(object):
         for method_name in self._proxy_methods:
             setattr(self, method_name, _proxy(method_name))
 
-class _ClassManager(object):
-    __metaclass__ = _CurriedProxyClass
+class _ClassManager(object, metaclass=_CurriedProxyClass):
     _proxy_on='session'
     _proxy_args=('cls',)
     _proxy_methods = (
@@ -222,7 +220,7 @@ class _ClassManager(object):
 
     @property
     def fields(self):
-        return self.field_index.values()
+        return list(self.field_index.values())
 
     @property
     def polymorphic_registry(self):
@@ -330,7 +328,7 @@ class _FieldDescriptor(object):
         try:
             return inst[self.name]
         except KeyError:
-            raise AttributeError, self.name
+            raise AttributeError(self.name)
 
     def __set__(self, inst, value):
         inst[self.name] = value

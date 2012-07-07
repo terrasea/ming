@@ -1,5 +1,5 @@
 import cgi
-import urllib
+import urllib.request, urllib.parse, urllib.error
 from threading import local
 
 import pymongo
@@ -83,13 +83,13 @@ def encode_keys(d):
     a valid kwargs argument'''
     return dict(
         (k.encode('utf-8'), v)
-        for k,v in d.iteritems())
+        for k,v in d.items())
 
 def all_class_properties(cls):
     'Find all properties of the class, including those inherited'
     found_names = set()
     for base in cls.__mro__:
-        for k,v in base.__dict__.iteritems():
+        for k,v in base.__dict__.items():
             if k in found_names: continue
             yield k,v
             found_names.add(k)
@@ -120,7 +120,7 @@ def indent(s, level=2):
 def fixup_index(index, direction=pymongo.ASCENDING):
 
     def _fixup(i):
-        if isinstance(i, basestring):
+        if isinstance(i, str):
             yield (i, direction)
         elif (isinstance(i, tuple)
               and len(i) == 2

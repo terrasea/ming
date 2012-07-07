@@ -43,12 +43,12 @@ class TestObject(TestCase):
         safe_obj = Object(
             a=[1,2,3],
             b=dict(a=12),
-            c=[ 'foo', 1, 1L, 1.0, now,
+            c=[ 'foo', 1, 1, 1.0, now,
                 Decimal('0.3'), None, oid ])
         safe_obj.make_safe()
         self.assertEqual(safe_obj, dict(
                 a=[1,2,3], b=dict(a=12),
-                c=[ 'foo', 1, 1L, 1.0, now,
+                c=[ 'foo', 1, 1, 1.0, now,
                     0.3, None, oid ]))
 
         unsafe_obj = Object(

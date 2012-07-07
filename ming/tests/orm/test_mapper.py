@@ -112,9 +112,9 @@ class TestBasicMapping(TestCase):
         assert repr(m) == '<Mapper Basic:basic>'
         self.datastore.db.basic.insert(dict(
                 a=1, b=[2,3], c=dict(d=4, e=5), f='unknown'))
-        print list(self.datastore.db.basic.find())
+        print(list(self.datastore.db.basic.find()))
         obj = self.Basic.query.find().options(instrument=False).first()
-        print obj
+        print(obj)
         q = self.Basic.query.find()
         self.assertEqual(q.count(), 1)
         m.remove({})

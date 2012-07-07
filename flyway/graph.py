@@ -19,8 +19,8 @@ class MigrationGraph(object):
         for mod,version in migrations:
             versions[mod].append(version)
         self._State = namedtuple('State', versions)
-        self._modules = versions.keys()
-        self._nodes = [ Node(self._State(*ver)) for ver in product(*versions.values()) ]
+        self._modules = list(versions.keys())
+        self._nodes = [ Node(self._State(*ver)) for ver in product(*list(versions.values())) ]
         self.node_by_state = dict((n.state, n) for n in self._nodes)
 
         # Index the nodes by (mod,version)
@@ -31,7 +31,7 @@ class MigrationGraph(object):
                 self._index[m,v].append(n)
 
         # Add edges for all the migrations
-        for m in migrations.itervalues():
+        for m in migrations.values():
             for direction in 'up', 'down':
                 ms = MigrateStep(self, m, direction)
                 for prev, next in ms.transitions():
@@ -41,7 +41,7 @@ class MigrationGraph(object):
         '''Return list of nodes that match the requirements listed in
         requirements, which is either a dict or list of (mod,version) pairs.'''
         if isinstance(requirements, dict):
-            requirements = requirements.iteritems()
+            requirements = iter(requirements.items())
         nodes = None
         for (mod, ver) in requirements:
             if nodes is None: nodes = set(self._index[mod,ver])
@@ -54,7 +54,7 @@ class MigrationGraph(object):
         # Find the start node
         start = dict((m, -1) for m in self._modules)
         start.update(start_requirements)
-        start = dict((str(k), v) for k,v in start.iteritems()
+        start = dict((str(k), v) for k,v in start.items()
                      if k in self._State._fields)
         start_state = self._State(**start)
         start = self.node_by_state[start_state]
@@ -68,8 +68,8 @@ class MigrationGraph(object):
         while nodes:
             cur = nodes.pop_smallest()
             if cur.distance == 1e9: # pragma no cover
-                raise ValueError, 'No migration path exists from %s to %s' % (
-                    start, end)
+                raise ValueError('No migration path exists from %s to %s' % (
+                    start, end))
             if cur in end:
                 return list(cur.path())
             cur.visit(nodes)
@@ -181,7 +181,7 @@ class priority_dict(dict):
         self._rebuild_heap()
 
     def _rebuild_heap(self):
-        self._heap = [(v, k) for k, v in self.iteritems()]
+        self._heap = [(v, k) for k, v in self.items()]
         heapify(self._heap)
 
     def smallest(self):

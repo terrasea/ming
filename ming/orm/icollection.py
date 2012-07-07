@@ -25,7 +25,7 @@ class InstrumentedObj(dict):
         self._tracker = tracker
         dict.update(
             self,
-            ((k,instrument(v, self._tracker)) for k,v in impl.iteritems()))
+            ((k,instrument(v, self._tracker)) for k,v in impl.items()))
 
     def _deinstrument(self):
         return self._impl
@@ -54,7 +54,7 @@ class InstrumentedObj(dict):
         try:
             return self[k]
         except KeyError:
-            raise AttributeError, k
+            raise AttributeError(k)
 
     def __eq__(self, y):
         return self._impl == deinstrument(y)
@@ -89,15 +89,11 @@ class InstrumentedObj(dict):
         if len(args) == 1:
             self[k] = args[0]
             return self[k]
-        raise (
-            TypeError,
-            'setdefault expected 1 or 2 arguments, got %d' % len(args)+1)
+        raise TypeError
 
     def update(self, *args, **kwargs):
         if len(args) > 1:
-            raise (
-                TypeError,
-                'update expected at most 1 arguments, got %d' % len(args)+1)
+            raise TypeError
         elif args:
             E = args[0]
             if hasattr(E, 'keys'):
@@ -106,7 +102,7 @@ class InstrumentedObj(dict):
             else:
                 for k,v in E:
                     self[k] = v
-        for k,v in kwargs.iteritems():
+        for k,v in kwargs.items():
             self[k] = v
 
     def replace(self, v):
@@ -148,7 +144,7 @@ class InstrumentedList(list):
         del self._impl[i]
 
     def __setslice__(self, i, j, v):
-        v = map(deinstrument, v)
+        v = list(map(deinstrument, v))
         iv = (instrument(item, self._tracker) for item in v)
         super(InstrumentedList, self).__setslice__(i, j, iv)
         self._tracker.removed_items(self._impl[i:j])
@@ -197,7 +193,7 @@ class InstrumentedList(list):
         self._tracker.added_item(v)
 
     def extend(self, iterable):
-        new_items = map(deinstrument, iterable)
+        new_items = list(map(deinstrument, iterable))
         self._impl.extend(new_items)
         super(InstrumentedList, self).extend(
             instrument(item, self._tracker)

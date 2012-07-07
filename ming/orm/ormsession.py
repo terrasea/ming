@@ -184,12 +184,12 @@ class ThreadLocalORMSession(ThreadLocalProxy):
     
     @classmethod
     def flush_all(cls):
-        for sess in cls._session_registry.itervalues():
+        for sess in cls._session_registry.values():
             sess.flush()
 
     @classmethod
     def close_all(cls):
-        for sess in cls._session_registry.itervalues():
+        for sess in cls._session_registry.values():
             sess.close()
 
 class ContextualORMSession(ContextualProxy):
@@ -215,12 +215,12 @@ class ContextualORMSession(ContextualProxy):
 
     @classmethod
     def flush_all(cls, context):
-        for sess in cls._session_registry[context].values():
+        for sess in list(cls._session_registry[context].values()):
             sess.flush()
 
     @classmethod
     def close_all(cls, context):
-        for sess in cls._session_registry[context].values():
+        for sess in list(cls._session_registry[context].values()):
             sess.close()
         del cls._session_registry[context]
 
@@ -249,7 +249,7 @@ class ORMCursor(object):
         return self.ming_cursor.count()
 
     def _next_impl(self):
-        doc = self.ming_cursor.next()
+        doc = next(self.ming_cursor)
         obj = self.session.imap.get(self.cls, doc['_id'])
         if obj is None:
             obj = self.mapper.create(doc, self._options)
@@ -267,7 +267,7 @@ class ORMCursor(object):
             self.session.save(obj)
         return obj
 
-    def next(self):
+    def __next__(self):
         call_hook(self, 'before_cursor_next', self)
         try:
             return self._next_impl()
@@ -306,18 +306,18 @@ class ORMCursor(object):
 
     def one(self):
         try:
-            result = self.next()
+            result = next(self)
         except StopIteration:
-            raise ValueError, 'Less than one result from .one()'
+            raise ValueError('Less than one result from .one()')
         try:
-            self.next()
+            next(self)
         except StopIteration:
             return result
-        raise ValueError, 'More than one result from .one()'
+        raise ValueError('More than one result from .one()')
 
     def first(self):
         try:
-            return self.next()
+            return next(self)
         except StopIteration:
             return None
 

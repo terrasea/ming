@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+
 import logging
 from functools import update_wrapper
 
@@ -19,7 +19,7 @@ def annotate_doc_failure(func):
     def wrapper(self, doc, *args, **kwargs):
         try:
             return func(self, doc, *args, **kwargs)
-        except pymongo.errors.OperationFailure, opf:
+        except pymongo.errors.OperationFailure as opf:
             opf.args = opf.args + (('doc:  ' + str(doc)),)
             raise
     return update_wrapper(wrapper, func)
@@ -43,7 +43,7 @@ class Session(object):
         try:
             return self.db[cls.m.collection_name]
         except TypeError:
-            raise exc.MongoGone, 'MongoDB is not connected'
+            raise exc.MongoGone('MongoDB is not connected')
 
     @property
     def db(self):
@@ -169,7 +169,7 @@ class Session(object):
         """
         fields_values = Object.from_bson(fields_values)
         fields_values.make_safe()
-        for k,v in fields_values.iteritems():
+        for k,v in fields_values.items():
             self._set(doc, k.split('.'), v)
         impl = self._impl(doc)
         impl.update({'_id':doc._id}, {'$set':fields_values}, safe=True)
@@ -181,10 +181,10 @@ class Session(object):
         Sets a field to value, only if value is greater than the current value
         Does not change it locally
         """
-        key = kwargs.keys()[0]
+        key = list(kwargs.keys())[0]
         value = kwargs[key]
         if value is None:
-            raise ValueError, "%s=%s" % (key, value)
+            raise ValueError("%s=%s" % (key, value))
 
         if key not in doc:
             self._impl(doc).update(

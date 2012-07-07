@@ -19,7 +19,7 @@ class MingMiddleware(object):
                 return result
             else:
                 return self._cleanup_iterator(result)
-        except self.flush_on_errors, exc:
+        except self.flush_on_errors as exc:
             self._cleanup_request()
             raise
         except:

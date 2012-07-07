@@ -1,5 +1,5 @@
 import unittest
-import test_globals
+from . import test_globals
 from flyway import runner
 from flyway.command import MigrateCommand
 

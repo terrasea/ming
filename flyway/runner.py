@@ -21,7 +21,7 @@ def run_migration(datastore, target_versions, dry_run):
     if info is None:
         info = MigrationInfo.make({})
     latest_versions = Migration.latest_versions()
-    for k,v in target_versions.iteritems():
+    for k,v in target_versions.items():
         cur = info.versions.get(k, -1)
         islatest = ' (LATEST)' if v == latest_versions[k] else ''
         log.info('Target %s=%s%s (current=%s)', k, v, islatest, cur)
@@ -42,7 +42,7 @@ def show_status(datastore):
     info = MigrationInfo.m.get()
     if info is None:
         info = MigrationInfo.make({})
-    for k,v in info.versions.iteritems():
+    for k,v in info.versions.items():
         log.info('%s=%s', k, v)
 
 def set_status(datastore, target_versions):
@@ -53,7 +53,7 @@ def set_status(datastore, target_versions):
     if info is None:
         info = MigrationInfo.make({})
     latest_versions = Migration.latest_versions()
-    for k,v in target_versions.iteritems():
+    for k,v in target_versions.items():
         cur = info.versions.get(k, -1)
         islatest = ' (LATEST)' if v == latest_versions[k] else ''
         log.info('FORCE %s=%s%s (current=%s)', k, v, islatest, cur)
@@ -66,7 +66,7 @@ def plan_migration(session, ormsession, info, target):
     global MIGRATION_GRAPH
     if MIGRATION_GRAPH is None:
         migrations = dict((k, v(session, ormsession))
-                          for k,v in Migration.migrations_registry.iteritems())
+                          for k,v in Migration.migrations_registry.items())
         MIGRATION_GRAPH = graph.MigrationGraph(migrations)
     else:
         MIGRATION_GRAPH.reset()

@@ -24,8 +24,7 @@ class MigrationMeta(type):
                 result[k] = v
         return result
 
-class Migration(object):
-    __metaclass__ = MigrationMeta
+class Migration(object, metaclass=MigrationMeta):
     version = 0
     module = None # filled in automatically by Metaclass
     migrations_registry = {}
@@ -50,11 +49,11 @@ class Migration(object):
 
     def up(self): # pragma no cover
         '''Upgrade to a new schema version'''
-        raise NotImplementedError, 'up'
+        raise NotImplementedError('up')
 
     def down(self): # pragma no cover
         '''Downgrade from this schema version (undo an 'up') '''
-        raise NotImplementedError, 'down'
+        raise NotImplementedError('down')
 
     def ensure_index(self, cls, fields, **kwargs):
         '''Ensures that a particular index has been created in the DB'''

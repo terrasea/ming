@@ -1,10 +1,10 @@
 import pymongo
 
-from session import Session
-from metadata import Field, Index, collection
-from declarative import Document
-from base import Cursor
-from version import __version__, __version_info__
+from .session import Session
+from .metadata import Field, Index, collection
+from .declarative import Document
+from .base import Cursor
+from .version import __version__, __version_info__
 
 # Re-export direction keys
 ASCENDING = pymongo.ASCENDING
@@ -14,7 +14,7 @@ def configure(**kwargs):
     """
     Given a dictionary of config values, creates DataStores and saves them by name
     """
-    from datastore import DataStore
+    from .datastore import DataStore
     from formencode.variabledecode import variable_decode
     from formencode import schema, validators
 
@@ -37,10 +37,10 @@ def configure(**kwargs):
 
     config = variable_decode(kwargs)
     datastores = {}
-    for name, datastore in config['ming'].iteritems():
+    for name, datastore in config['ming'].items():
         args = DatastoreSchema.to_python(datastore)
         datastores[name] = DataStore(**args)
     Session._datastores = datastores
     # bind any existing sessions
-    for name, session in Session._registry.iteritems():
+    for name, session in Session._registry.items():
         session.bind = datastores.get(name, None)

@@ -13,7 +13,7 @@ class Object(dict):
         try:
             return self[name]
         except KeyError:
-            raise AttributeError, name
+            raise AttributeError(name)
 
     def __setattr__(self, name, value):
         if name in self.__class__.__dict__:
@@ -25,7 +25,7 @@ class Object(dict):
     def from_bson(cls, bson):
         if isinstance(bson, dict):
             return cls((k, cls.from_bson(v))
-                       for k,v in bson.iteritems())
+                       for k,v in bson.items())
         elif isinstance(bson, list):
             return [ cls.from_bson(v) for v in bson ]
         else:
@@ -52,8 +52,8 @@ class Cursor(object):
     def __len__(self):
         return self.count()
 
-    def next(self):
-        doc = self.cursor.next()
+    def __next__(self):
+        doc = next(self.cursor)
         if doc is None: return None
         return self.cls.make(
             doc,
@@ -81,18 +81,18 @@ class Cursor(object):
 
     def one(self):
         try:
-            result = self.next()
+            result = next(self)
         except StopIteration:
-            raise ValueError, 'Less than one result from .one()'
+            raise ValueError('Less than one result from .one()')
         try:
-            self.next()
+            next(self)
         except StopIteration:
             return result
-        raise ValueError, 'More than one result from .one()'
+        raise ValueError('More than one result from .one()')
 
     def first(self):
         try:
-            return self.next()
+            return next(self)
         except StopIteration:
             return None
 
@@ -107,9 +107,9 @@ def _safe_bson(obj):
     if isinstance(obj, list):
         return [ _safe_bson(o) for o in obj ]
     elif isinstance(obj, dict):
-        return Object((k, _safe_bson(v)) for k,v in obj.iteritems())
+        return Object((k, _safe_bson(v)) for k,v in obj.items())
     elif isinstance(obj, (
-            basestring, int, long, float, datetime, NoneType,
+            str, int, float, datetime, NoneType,
             bson.ObjectId)):
         return obj
     elif isinstance(obj, decimal.Decimal):

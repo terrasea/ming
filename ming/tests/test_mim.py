@@ -55,7 +55,7 @@ class TestCommands(TestCase):
             update={'$inc': dict(a=1)},
             new=False)
         self.assertEqual(result['value'], self.doc)
-        newdoc = self.bind.db.coll.find().next()
+        newdoc = next(self.bind.db.coll.find())
         self.assertEqual(newdoc['a'], 3, newdoc)
         
     def test_findandmodify_new(self):
@@ -65,7 +65,7 @@ class TestCommands(TestCase):
             update={'$inc': dict(a=1)},
             new=True)
         self.assertEqual(result['value']['a'], 3)
-        newdoc = self.bind.db.coll.find().next()
+        newdoc = next(self.bind.db.coll.find())
         self.assertEqual(newdoc['a'], 3, newdoc)
 
     def test_mr_inline(self):

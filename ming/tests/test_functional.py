@@ -188,7 +188,7 @@ class TestCursor(TestCase):
         mongo_cursor = mock.Mock()
         mongo_cursor.count = mock.Mock(return_value=3)
         mongo_cursor.__iter__ = lambda self:base_iter
-        mongo_cursor.next = base_iter.next
+        mongo_cursor.next = base_iter.__next__
         mongo_cursor.limit = mock.Mock(return_value=mongo_cursor)
         mongo_cursor.hint = mock.Mock(return_value=mongo_cursor)
         mongo_cursor.skip = mock.Mock(return_value=mongo_cursor)
@@ -199,7 +199,7 @@ class TestCursor(TestCase):
         obj = dict(a=None, b=dict(a=None))
         self.assertEqual(len(self.cursor), 3)
         self.assertEqual(self.cursor.count(), 3)
-        self.assertEqual(self.cursor.next(), obj)
+        self.assertEqual(next(self.cursor), obj)
         self.cursor.limit(100)
         self.cursor.skip(10)
         self.cursor.hint('foo')
@@ -225,8 +225,8 @@ class TestCursor(TestCase):
         self.assertRaises(ValueError, self.cursor.one)
 
     def test_one_ok(self):
-        self.cursor.next()
-        self.cursor.next()
+        next(self.cursor)
+        next(self.cursor)
         obj = dict(a=None, b=dict(a=None))
         self.assertEqual(self.cursor.one(), obj)
 

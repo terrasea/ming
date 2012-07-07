@@ -1,4 +1,4 @@
-from __future__ import with_statement
+
 import time
 import logging
 
@@ -50,7 +50,7 @@ class Engine(object):
 
     @property
     def conn(self):
-        for attempt in xrange(self._connect_retry+1):
+        for attempt in range(self._connect_retry+1):
             if self._conn is not None: break
             with self._lock:
                 if self._connect() is None:

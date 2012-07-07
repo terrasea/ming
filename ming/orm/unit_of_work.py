@@ -12,22 +12,22 @@ class UnitOfWork(object):
 
     @property
     def new(self):
-        return (obj for obj in self._objects.itervalues()
+        return (obj for obj in self._objects.values()
                 if state(obj).status == ObjectState.new)
 
     @property
     def clean(self):
-        return (obj for obj in self._objects.itervalues()
+        return (obj for obj in self._objects.values()
                 if state(obj).status == ObjectState.clean)
 
     @property
     def dirty(self):
-        return (obj for obj in self._objects.itervalues()
+        return (obj for obj in self._objects.values()
                 if state(obj).status == ObjectState.dirty)
 
     @property
     def deleted(self):
-        return (obj for obj in self._objects.itervalues()
+        return (obj for obj in self._objects.values()
                 if state(obj).status == ObjectState.deleted)
 
     def flush(self, **kwargs):
@@ -35,7 +35,7 @@ class UnitOfWork(object):
         inow = self.session.insert_now
         unow = self.session.update_now
         dnow = self.session.delete_now
-        for i, obj in self._objects.items():
+        for i, obj in list(self._objects.items()):
             st = state(obj)
             if st.status == ObjectState.new:
                 inow(obj, st, **kwargs)
@@ -53,7 +53,7 @@ class UnitOfWork(object):
                 assert False, 'Unknown obj state: %s' % st.status
         self._objects = new_objs
         self.session.imap.clear()
-        for obj in new_objs.itervalues():
+        for obj in new_objs.values():
             self.session.imap.save(obj)
 
     def __repr__(self):
